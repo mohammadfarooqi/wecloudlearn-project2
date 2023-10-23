@@ -1,0 +1,26 @@
+---
+- name: Configure API Server
+  hosts: api_server
+  become: yes
+
+  tasks:
+    - name: Install Python and FastAPI
+      apt:
+        name: '{{ item }}'
+        state: present
+      loop:
+        - python3
+        - python3-pip
+        - uvicorn
+      tags: python
+
+    - name: Install FastAPI
+      pip:
+        name: fastapi
+        state: present
+      tags: python
+
+    # - name: Start FastAPI Service
+    #   command: 'uvicorn app:app --host 0.0.0.0 --port 80'
+    #   args:
+    #     chdir: # path to server file

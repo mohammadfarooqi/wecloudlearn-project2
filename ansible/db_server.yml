@@ -1,0 +1,50 @@
+---
+- name: Configure Database Server
+  hosts: db_server
+  become: yes
+
+  tasks:
+    - name: Installing MySQL and dependencies
+      package:
+        name: '{{item}}'
+        state: present
+        update_cache: yes
+      loop:
+        - mysql-server
+        - mysql-client
+        - python3-mysqldb
+        - libmysqlclient-dev
+
+    - name: Start and Enable MySQL Service
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Creating MySQL User
+      mysql_user:
+        name: '{{db_user}}'
+        password: '{{db_pass}}'
+        priv: '*.*:ALL'
+        host: '%'
+        state: present
+
+    - name: Creating test_db
+      mysql_db:
+        name: '{{db_name}}'
+        state: present
+
+    - name: Enable Remote Login to MySQL
+      lineinfile:
+        path: /etc/mysql/mysql.conf.d/mysqld.cnf
+        regexp: '^bind-address'
+        line: 'bind-address = 0.0.0.0'
+        backup: yes
+      notify:
+        - Restart mysql
+
+  handlers:
+    - name: Restart mysql
+      service:
+        name: mysql
+        state: restarted
